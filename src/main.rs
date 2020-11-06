@@ -18,6 +18,8 @@ const SCREEN_SIZE: (u32, u32) = (1920, 1080);
 const SPRITE_TILE_SIZE: (u32, u32) = (64, 64);
 // 플레이어 걷기 애니메이션의 최대 스프라이트 갯수
 const PLAYER_WALKING_SPRITES: u32 = 4;
+// 플레이어 걷기 속도
+const PLAYER_SPEED: u32 = 4;
  
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -85,22 +87,22 @@ pub fn main() {
         if !new_keys.is_empty() || !old_keys.is_empty() {
             // 입력 받은 키 (KeyDowns)
             for key in new_keys {
-                if key == Keycode::S {
-                    player_velocity.set_y(4);
-                } else if key == Keycode::A {
-                    player_velocity.set_x(-4);
-                } else if key == Keycode::D {
-                    player_velocity.set_x(4);
-                } else if key == Keycode::W {
-                    player_velocity.set_y(-4);
+                if key == Keycode::Down {
+                    player_velocity.set_y(PLAYER_SPEED as i32);
+                } else if key == Keycode::Left {
+                    player_velocity.set_x(-(PLAYER_SPEED as i32));
+                } else if key == Keycode::Right {
+                    player_velocity.set_x(PLAYER_SPEED as i32);
+                } else if key == Keycode::Up {
+                    player_velocity.set_y(-(PLAYER_SPEED as i32));
                 }
             }
 
             // 입력 해제 된 키 (KeyUps)
             for key in old_keys {
-                if key == Keycode::S || key == Keycode::W {
+                if key == Keycode::Down || key == Keycode::Up {
                     player_velocity.set_y(0);
-                } else if key == Keycode::A || key == Keycode::D {
+                } else if key == Keycode::Left || key == Keycode::Right {
                     player_velocity.set_x(0);
                 }
             }
@@ -127,8 +129,13 @@ pub fn main() {
         }
 
         // 플레이어의 벨로시티 값으로 플레이어를 이동한다
-        player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
-        player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
+        if player_velocity.x() != 0 && player_velocity.y() != 0 {
+            player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
+            player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
+        } else {
+            player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
+            player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
+        }
 
         /* 그리기 */
         // 플레이어 스프라이트 그리기
