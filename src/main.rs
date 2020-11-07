@@ -13,7 +13,7 @@ use physics::velocity::Velocity;
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
 // 화면 크기
-const SCREEN_SIZE: (u32, u32) = (1280, 720);
+const SCREEN_SIZE: (u32, u32) = (1024, 768);
 // 스프라이트의 크기 상수
 const SPRITE_TILE_SIZE: (u32, u32) = (64, 64);
 // 플레이어 걷기 애니메이션의 최대 스프라이트 갯수
@@ -58,13 +58,12 @@ pub fn main() {
     'running: loop {
         // 프레임 증가
         frame += 1;
+        canvas.clear();
 
         // 게임루프 시작 틱(ms)
         let start_tick = timer.ticks();
 
-        
         for event in event_pump.poll_iter() {
-            canvas.clear();
             match event {
                 // Event::Quit {..} |
                 // Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
