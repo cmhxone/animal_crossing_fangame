@@ -1,6 +1,7 @@
 extern crate sdl2; 
 
 mod physics;
+mod camera;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -37,7 +38,7 @@ pub fn main() {
     let texture_creator = canvas.texture_creator();
 
     // 카메라 논리 객체
-    let camera = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
+    let mut main_cam = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
     
     // 플레이어 스프라이트
     let player_sprite = include_bytes!("../asset/resource/sprite/player.png");
@@ -46,10 +47,10 @@ pub fn main() {
     let mut player_dst_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0 * 2, SPRITE_TILE_SIZE.1 * 2);
     let mut player_velocity = Velocity::new(0, 0, 0);
 
-    let background_sprite = include_bytes!("../asset/resource/sprite/background.bmp");
+    let background_sprite = include_bytes!("../asset/resource/sprite/background.png");
     let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
-    let mut background_src_rect = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
-    let mut background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
+    let background_src_rect = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
+    let background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
  
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
@@ -138,27 +139,48 @@ pub fn main() {
 
         // 플레이어의 벨로시티 값으로 플레이어를 이동한다
         if player_velocity.x() != 0 && player_velocity.y() != 0 {
-            if background_dst_rect.x() <= 0 && background_dst_rect.y() <= 0 {
-                background_dst_rect.set_x(background_dst_rect.x() - (player_velocity.x() as f64 / 1.414213).round() as i32);
-                background_dst_rect.set_y(background_dst_rect.y() - (player_velocity.y() as f64 / 1.414213).round() as i32);
-                player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
-                player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
-            }
+            player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
+            player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
         } else {
-            if background_dst_rect.x() <= 0 && background_dst_rect.y() <= 0 {
-                background_dst_rect.set_x(background_dst_rect.x() - player_velocity.x());
-                background_dst_rect.set_y(background_dst_rect.y() - player_velocity.y());
-                player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
-                player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
-            }
+            player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
+            player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
         }
 
-        println!("{:?}", background_dst_rect);
+        // 플레이어가 배경 밖으로 나가려고 할 때, 플레이어를 재위치 시킨다
+        if player_dst_rect.x() < 0 {
+            player_dst_rect.set_x(0);
+        }
+        if player_dst_rect.y() < 0 {
+            player_dst_rect.set_y(0);
+        }
+        if player_dst_rect.right() > background_dst_rect.right() {
+            player_dst_rect.set_right(background_dst_rect.right());
+        }
+        if player_dst_rect.bottom() > background_dst_rect.bottom() {
+            player_dst_rect.set_bottom(background_dst_rect.bottom());
+        }
+
+        // 카메라의 중앙을 플레이어의 중앙에 맞춘다
+        main_cam.center_on(player_dst_rect.center());
+
+        // 카메라의 위치를 배경 내로 조정한다
+        if main_cam.x() < 0 {
+            main_cam.set_x(0);
+        }
+        if main_cam.y() < 0 {
+            main_cam.set_y(0);
+        }
+        if main_cam.right() > background_dst_rect.right() {
+            main_cam.set_right(background_dst_rect.right());
+        }
+        if main_cam.bottom() > background_dst_rect.bottom() {
+            main_cam.set_bottom(background_dst_rect.bottom());
+        }
 
         /* 그리기 */
         // 플레이어 스프라이트 그리기
-        canvas.copy_ex(&background_texture, background_src_rect, background_dst_rect, 0.0, None, false, false).unwrap();
-        canvas.copy_ex(&player_texture, player_src_rect, player_dst_rect, 0.0, None, false, false).unwrap();
+        canvas.copy_ex(&background_texture, background_src_rect, camera::camera::aligned_rect(main_cam, background_dst_rect), 0.0, None, false, false).unwrap();
+        canvas.copy_ex(&player_texture, player_src_rect, camera::camera::aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
         canvas.present();
