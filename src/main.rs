@@ -49,12 +49,8 @@ pub fn main() {
 
     let background_sprite = include_bytes!("../asset/resource/sprite/background.png");
     let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
-<<<<<<< HEAD
     let background_src_rect = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
     let background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
-=======
-    let mut background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
->>>>>>> 8c76b687ef3be1411c06481feef522208d33c697
  
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
@@ -183,13 +179,8 @@ pub fn main() {
 
         /* 그리기 */
         // 플레이어 스프라이트 그리기
-<<<<<<< HEAD
         canvas.copy_ex(&background_texture, background_src_rect, camera::camera::aligned_rect(main_cam, background_dst_rect), 0.0, None, false, false).unwrap();
         canvas.copy_ex(&player_texture, player_src_rect, camera::camera::aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
-=======
-        canvas.copy_ex(&background_texture, None, background_dst_rect, 0.0, None, false, false).unwrap();
-        canvas.copy_ex(&player_texture, player_src_rect, player_dst_rect, 0.0, None, false, false).unwrap();
->>>>>>> 8c76b687ef3be1411c06481feef522208d33c697
 
         // 현재 캔버스를 윈도우에 그린다
         canvas.present();
