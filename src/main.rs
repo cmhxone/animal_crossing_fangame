@@ -20,7 +20,7 @@ const SPRITE_TILE_SIZE: (u32, u32) = (64, 64);
 const PLAYER_WALKING_SPRITES: u32 = 4;
 // 플레이어 걷기 속도
 const PLAYER_SPEED: u32 = 4;
- 
+
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let _sdl_image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG);
@@ -35,6 +35,9 @@ pub fn main() {
     let mut timer = sdl_context.timer().unwrap();
     let mut canvas = window.into_canvas().build().unwrap();
     let texture_creator = canvas.texture_creator();
+
+    // 카메라 논리 객체
+    let camera = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
     
     // 플레이어 스프라이트
     let player_sprite = include_bytes!("../asset/resource/sprite/player.png");
@@ -42,6 +45,11 @@ pub fn main() {
     let mut player_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
     let mut player_dst_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0 * 2, SPRITE_TILE_SIZE.1 * 2);
     let mut player_velocity = Velocity::new(0, 0, 0);
+
+    let background_sprite = include_bytes!("../asset/resource/sprite/background.bmp");
+    let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
+    let mut background_src_rect = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
+    let mut background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
  
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
@@ -130,15 +138,26 @@ pub fn main() {
 
         // 플레이어의 벨로시티 값으로 플레이어를 이동한다
         if player_velocity.x() != 0 && player_velocity.y() != 0 {
-            player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
-            player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
+            if background_dst_rect.x() <= 0 && background_dst_rect.y() <= 0 {
+                background_dst_rect.set_x(background_dst_rect.x() - (player_velocity.x() as f64 / 1.414213).round() as i32);
+                background_dst_rect.set_y(background_dst_rect.y() - (player_velocity.y() as f64 / 1.414213).round() as i32);
+                player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
+                player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
+            }
         } else {
-            player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
-            player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
+            if background_dst_rect.x() <= 0 && background_dst_rect.y() <= 0 {
+                background_dst_rect.set_x(background_dst_rect.x() - player_velocity.x());
+                background_dst_rect.set_y(background_dst_rect.y() - player_velocity.y());
+                player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
+                player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
+            }
         }
+
+        println!("{:?}", background_dst_rect);
 
         /* 그리기 */
         // 플레이어 스프라이트 그리기
+        canvas.copy_ex(&background_texture, background_src_rect, background_dst_rect, 0.0, None, false, false).unwrap();
         canvas.copy_ex(&player_texture, player_src_rect, player_dst_rect, 0.0, None, false, false).unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
