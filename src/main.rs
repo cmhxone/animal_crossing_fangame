@@ -2,6 +2,7 @@ extern crate sdl2;
 
 mod physics;
 mod camera;
+// mod entity;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -10,6 +11,7 @@ use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::rect::Rect;
 use std::collections::HashSet;
 use physics::velocity::Velocity;
+// use entity::player::Player;
 
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
@@ -44,14 +46,21 @@ pub fn main() {
     let player_sprite = include_bytes!("../asset/resource/sprite/player.png");
     let player_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
     let mut player_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
-    let mut player_dst_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0 * 2, SPRITE_TILE_SIZE.1 * 2);
+    let mut player_dst_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
     let mut player_velocity = Velocity::new(0, 0, 0);
 
+    // 배경화면 스프라이트
     let background_sprite = include_bytes!("../asset/resource/sprite/background.png");
     let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
-    let background_src_rect = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
+    let background_src_rect = Rect::new(0, 0, background_texture.query().width, background_texture.query().height);
     let background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
  
+    // 오브젝트 생성
+    let object_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
+    let object_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
+    let object_dst_rect = Rect::new(1280, 720, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
+
+    // 화면 초기화
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
 
@@ -178,8 +187,13 @@ pub fn main() {
         }
 
         /* 그리기 */
-        // 플레이어 스프라이트 그리기
+        // 배경화면 스프라이트 그리기
         canvas.copy_ex(&background_texture, background_src_rect, camera::camera::aligned_rect(main_cam, background_dst_rect), 0.0, None, false, false).unwrap();
+
+        // 오브젝트 스프라이트 그리기
+        canvas.copy_ex(&object_texture, object_src_rect, camera::camera::aligned_rect(main_cam, object_dst_rect), 0.0, None, false, false).unwrap();
+
+        // 플레이어 스프라이트 그리기
         canvas.copy_ex(&player_texture, player_src_rect, camera::camera::aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
