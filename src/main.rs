@@ -48,7 +48,6 @@ pub fn main() {
 
     let background_sprite = include_bytes!("../asset/resource/sprite/background.bmp");
     let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
-    let mut background_src_rect = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
     let mut background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
  
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
@@ -157,7 +156,7 @@ pub fn main() {
 
         /* 그리기 */
         // 플레이어 스프라이트 그리기
-        canvas.copy_ex(&background_texture, background_src_rect, background_dst_rect, 0.0, None, false, false).unwrap();
+        canvas.copy_ex(&background_texture, None, background_dst_rect, 0.0, None, false, false).unwrap();
         canvas.copy_ex(&player_texture, player_src_rect, player_dst_rect, 0.0, None, false, false).unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
