@@ -43,6 +43,19 @@ pub fn main() {
     // 카메라 논리 객체
     let mut main_cam = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
     
+    // 맵 파일 읽어오기
+    let mut map = String::from_utf8_lossy(include_bytes!("../asset/resource/map/town.map"));
+    let mut tokenized = map.split("\r\n");
+
+    // 맵 타일 토큰화
+    for token in tokenized {
+        let mut tiles = token.split(" ");
+
+        for tile in tiles {
+            println!("{}", tile);
+        }
+    }
+
     // 플레이어 스프라이트
     let player_sprite = include_bytes!("../asset/resource/sprite/player.png");
     let player_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
@@ -59,7 +72,7 @@ pub fn main() {
     // 오브젝트 생성
     let object_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
     let object_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
-    let object_dst_rect = Rect::new(1141, 725, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
+    let object_dst_rect = Rect::new(640, 640, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
 
     // 화면 초기화
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
