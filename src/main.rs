@@ -13,7 +13,6 @@ use std::collections::HashSet;
 use physics::velocity::Velocity;
 use camera::camera::{ aligned_rect };
 use physics::collision::{ is_collide };
-use entity::player::Player;
 
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
@@ -28,7 +27,7 @@ const PLAYER_SPEED: u32 = 4;
 // 맵 타일 크기
 const TILE_SIZE: (u32, u32) = (64, 64);
 // 맵 타일 가로 최대 인덱스
-const TILE_HINDEX_MAX: u32 = 9;
+const TILE_HINDEX_MAX: u32 = 10;
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
