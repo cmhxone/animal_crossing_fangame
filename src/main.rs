@@ -2,7 +2,7 @@ extern crate sdl2;
 
 mod physics;
 mod camera;
-// mod entity;
+mod entity;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -13,6 +13,7 @@ use std::collections::HashSet;
 use physics::velocity::Velocity;
 use camera::camera::{ aligned_rect };
 use physics::collision::{ is_collide };
+use entity::player::Player;
 
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
@@ -24,6 +25,10 @@ const SPRITE_TILE_SIZE: (u32, u32) = (64, 64);
 const PLAYER_WALKING_SPRITES: u32 = 4;
 // 플레이어 걷기 속도
 const PLAYER_SPEED: u32 = 4;
+// 맵 타일 크기
+const TILE_SIZE: (u32, u32) = (64, 64);
+// 맵 타일 가로 최대 인덱스
+const TILE_HINDEX_MAX: u32 = 9;
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -44,17 +49,27 @@ pub fn main() {
     let mut main_cam = Rect::new(0, 0, SCREEN_SIZE.0, SCREEN_SIZE.1);
     
     // 맵 파일 읽어오기
-    let mut map = String::from_utf8_lossy(include_bytes!("../asset/resource/map/town.map"));
-    let mut tokenized = map.split("\r\n");
+    let map = String::from_utf8_lossy(include_bytes!("../asset/resource/map/town.map"));
+    let map_line: Vec<&str> = map.split("\n").collect();
+    let mut map_size: (u32, u32) = (0, 0);
+    let mut map_tiles: Vec<(Rect, &str)> = Vec::new();
 
     // 맵 타일 토큰화
-    for token in tokenized {
-        let mut tiles = token.split(" ");
-
-        for tile in tiles {
-            println!("{}", tile);
+    for line in map_line {
+        // 토큰을 다시 타일로 토큰화
+        let field: Vec<&str> = line.split(" ").collect();
+        map_size.1 = 0;
+        for tile in field {
+            // println!("Tile{}: {}", map_size.1, tile);
+            map_tiles.push((Rect::new(map_size.1 as i32, map_size.0 as i32, TILE_SIZE.0, TILE_SIZE.1), tile));
+            map_size.1 += TILE_SIZE.1;
         }
+        map_size.0 += TILE_SIZE.0;
     }
+
+    // 타일 스프라이트
+    let tile_sprite = include_bytes!("../asset/resource/sprite/tiles.png");
+    let tile_texture = texture_creator.load_texture_bytes(tile_sprite).unwrap();
 
     // 플레이어 스프라이트
     let player_sprite = include_bytes!("../asset/resource/sprite/player.png");
@@ -63,11 +78,17 @@ pub fn main() {
     let mut player_dst_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
     let mut player_velocity = Velocity::new(0, 0, 0);
 
+    // let mut player = Player::new(
+    //     Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1),
+    //     Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1),
+    //     Velocity::new(0, 0, 0),
+    // );
+
     // 배경화면 스프라이트
-    let background_sprite = include_bytes!("../asset/resource/sprite/background.png");
+    let background_sprite = include_bytes!("../asset/resource/sprite/gray_background.png");
     let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
     let background_src_rect = Rect::new(0, 0, background_texture.query().width, background_texture.query().height);
-    let background_dst_rect = Rect::new(0, 0, SCREEN_SIZE.0 * 2, SCREEN_SIZE.1 * 2);
+    let background_dst_rect = Rect::new(0, 0, map_size.1, map_size.0);
  
     // 오브젝트 생성
     let object_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
@@ -121,12 +142,16 @@ pub fn main() {
             for key in new_keys {
                 if key == Keycode::Down {
                     player_velocity.set_y(PLAYER_SPEED as i32);
+                    // player.set_velocity_y(PLAYER_SPEED as i32);
                 } else if key == Keycode::Left {
                     player_velocity.set_x(-(PLAYER_SPEED as i32));
+                    // player.set_velocity_x(-(PLAYER_SPEED as i32));
                 } else if key == Keycode::Right {
                     player_velocity.set_x(PLAYER_SPEED as i32);
+                    // player.set_velocity_x(PLAYER_SPEED as i32);
                 } else if key == Keycode::Up {
                     player_velocity.set_y(-(PLAYER_SPEED as i32));
+                    // player.set_velocity_y(-(PLAYER_SPEED as i32));
                 }
             }
 
@@ -134,11 +159,14 @@ pub fn main() {
             for key in old_keys {
                 if key == Keycode::Down || key == Keycode::Up {
                     player_velocity.set_y(0);
+                    // player.set_velocity_y(0);
                 } else if key == Keycode::Left || key == Keycode::Right {
                     player_velocity.set_x(0);
+                    // player.set_velocity_x(0);
                 }
             }
         }
+
         // 키를 갱신한다
         prev_keys = keys;
 
@@ -223,12 +251,26 @@ pub fn main() {
         /* 그리기 */
         // 배경화면 스프라이트 그리기
         canvas.copy_ex(&background_texture, background_src_rect, aligned_rect(main_cam, background_dst_rect), 0.0, None, false, false).unwrap();
-
+        
+        // 타일 그리기
+        for tile in &map_tiles {
+            // 타일에 맞춰 드로잉 한다
+            canvas.copy_ex(
+                &tile_texture,
+                Rect::new(
+                    tile.1.parse::<i32>().unwrap() % TILE_HINDEX_MAX as i32 *TILE_SIZE.0 as i32,
+                    tile.1.parse::<i32>().unwrap() / TILE_HINDEX_MAX as i32 *TILE_SIZE.1 as i32,
+                    TILE_SIZE.0, TILE_SIZE.1),
+                aligned_rect(main_cam, tile.0),
+                0.0, None, false, false
+            ).unwrap();
+        }
         // 오브젝트 스프라이트 그리기
         canvas.copy_ex(&object_texture, object_src_rect, aligned_rect(main_cam, object_dst_rect), 0.0, None, false, false).unwrap();
 
         // 플레이어 스프라이트 그리기
         canvas.copy_ex(&player_texture, player_src_rect, aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
+
 
         // 현재 캔버스를 윈도우에 그린다
         canvas.present();
