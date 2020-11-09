@@ -11,7 +11,8 @@ use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::rect::Rect;
 use std::collections::HashSet;
 use physics::velocity::Velocity;
-// use entity::player::Player;
+use camera::camera::{ aligned_rect };
+use physics::collision::{ is_collide };
 
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
@@ -58,7 +59,7 @@ pub fn main() {
     // 오브젝트 생성
     let object_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
     let object_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
-    let object_dst_rect = Rect::new(1280, 720, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
+    let object_dst_rect = Rect::new(1141, 725, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
 
     // 화면 초기화
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
@@ -174,10 +175,10 @@ pub fn main() {
 
         // 카메라의 위치를 배경 내로 조정한다
         if main_cam.x() < 0 {
-            main_cam.set_x(0);
+            main_cam.set_x(background_dst_rect.left());
         }
         if main_cam.y() < 0 {
-            main_cam.set_y(0);
+            main_cam.set_y(background_dst_rect.top());
         }
         if main_cam.right() > background_dst_rect.right() {
             main_cam.set_right(background_dst_rect.right());
@@ -186,15 +187,35 @@ pub fn main() {
             main_cam.set_bottom(background_dst_rect.bottom());
         }
 
+        // 물체와 충돌 시 위치 재조정
+        match is_collide(player_dst_rect, object_dst_rect) {
+            Some(collision_rect) => {
+                // 좌우 충돌
+                if collision_rect.x() == player_dst_rect.x() {
+                    player_dst_rect.set_x(player_dst_rect.left() + PLAYER_SPEED as i32);
+                } else {
+                    player_dst_rect.set_right(player_dst_rect.right() - PLAYER_SPEED as i32);
+                }
+
+                // 상하 충돌
+                if collision_rect.y() == player_dst_rect.y() {
+                    player_dst_rect.set_y(player_dst_rect.top() + PLAYER_SPEED as i32);
+                } else {
+                    player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
+                }
+            }
+            None => {}
+        }
+
         /* 그리기 */
         // 배경화면 스프라이트 그리기
-        canvas.copy_ex(&background_texture, background_src_rect, camera::camera::aligned_rect(main_cam, background_dst_rect), 0.0, None, false, false).unwrap();
+        canvas.copy_ex(&background_texture, background_src_rect, aligned_rect(main_cam, background_dst_rect), 0.0, None, false, false).unwrap();
 
         // 오브젝트 스프라이트 그리기
-        canvas.copy_ex(&object_texture, object_src_rect, camera::camera::aligned_rect(main_cam, object_dst_rect), 0.0, None, false, false).unwrap();
+        canvas.copy_ex(&object_texture, object_src_rect, aligned_rect(main_cam, object_dst_rect), 0.0, None, false, false).unwrap();
 
         // 플레이어 스프라이트 그리기
-        canvas.copy_ex(&player_texture, player_src_rect, camera::camera::aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
+        canvas.copy_ex(&player_texture, player_src_rect, aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
         canvas.present();
