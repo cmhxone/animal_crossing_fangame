@@ -49,14 +49,14 @@ pub fn main() {
     
     // 맵 파일 읽어오기
     let map = String::from_utf8_lossy(include_bytes!("../asset/resource/map/town.map"));
-    let map_line: Vec<&str> = map.split("\n").collect();
+    let map_line: Vec<&str> = map.lines().collect();
     let mut map_size: (u32, u32) = (0, 0);
     let mut map_tiles: Vec<(Rect, &str)> = Vec::new();
 
     // 맵 타일 토큰화
     for line in map_line {
         // 토큰을 다시 타일로 토큰화
-        let field: Vec<&str> = line.split(" ").collect();
+        let field: Vec<&str> = line.split_whitespace().collect();
         map_size.1 = 0;
         for tile in field {
             // println!("Tile{}: {}", map_size.1, tile);
