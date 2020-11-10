@@ -69,7 +69,7 @@ pub fn main() {
     }
 
     // 타일 스프라이트
-    let tile_sprite = include_bytes!("../asset/resource/sprite/tiles.png");
+    let tile_sprite = include_bytes!("../asset/resource/sprite/tiles_edit.png");
     let tile_texture = texture_creator.load_texture_bytes(tile_sprite).unwrap();
 
     // 플레이어 스프라이트
@@ -272,16 +272,42 @@ pub fn main() {
         
         // 타일 그리기
         for tile in &map_tiles {
+            let tile_index = tile.1.parse::<i32>().unwrap();
+
             // 타일에 맞춰 드로잉 한다
             canvas.copy_ex(
                 &tile_texture,
                 Rect::new(
-                    tile.1.parse::<i32>().unwrap() % TILE_HINDEX_MAX as i32 *TILE_SIZE.0 as i32,
-                    tile.1.parse::<i32>().unwrap() / TILE_HINDEX_MAX as i32 *TILE_SIZE.1 as i32,
+                    tile_index % TILE_HINDEX_MAX as i32 *TILE_SIZE.0 as i32,
+                    tile_index / TILE_HINDEX_MAX as i32 *TILE_SIZE.1 as i32,
                     TILE_SIZE.0, TILE_SIZE.1),
                 aligned_rect(main_cam, tile.0),
                 0.0, None, false, false
             ).unwrap();
+            
+            match tile_index {
+                8|9|18|19|28|29|38|39|48|49 => {
+                    match is_collide(player_dst_rect, tile.0) {
+                        Some(collision_rect) => {
+                            // 좌우 충돌
+                            if collision_rect.x() == player_dst_rect.x() {
+                                player_dst_rect.set_x(player_dst_rect.left() + PLAYER_SPEED as i32);
+                            } else {
+                                player_dst_rect.set_right(player_dst_rect.right() - PLAYER_SPEED as i32);
+                            }
+        
+                            // 상하 충돌
+                            if collision_rect.y() == player_dst_rect.y() {
+                                player_dst_rect.set_y(player_dst_rect.top() + PLAYER_SPEED as i32);
+                            } else {
+                                player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
+                            }
+                        },
+                        None => {},
+                    }
+                },
+                _ => {},
+            }
         }
 
         // 오브젝트 벡터 그리기, 충돌 판정
