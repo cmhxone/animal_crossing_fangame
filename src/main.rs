@@ -20,6 +20,7 @@ const FRAME_PER_SECOND: u32 = 60;
 const SCREEN_SIZE: (u32, u32) = (1024, 768);
 // 스프라이트의 크기 상수
 const SPRITE_TILE_SIZE: (u32, u32) = (64, 64);
+const OBJ_SPRITE_TILE_SIZE: (u32, u32) = (16, 16);
 // 플레이어 걷기 애니메이션의 최대 스프라이트 갯수
 const PLAYER_WALKING_SPRITES: u32 = 4;
 // 플레이어 걷기 속도
@@ -28,6 +29,7 @@ const PLAYER_SPEED: u32 = 4;
 const TILE_SIZE: (u32, u32) = (64, 64);
 // 맵 타일 가로 최대 인덱스
 const TILE_HINDEX_MAX: u32 = 10;
+const OBJ_TILE_HINDEX_MAX: u32 = 4;
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -90,9 +92,26 @@ pub fn main() {
     let background_dst_rect = Rect::new(0, 0, map_size.1, map_size.0);
  
     // 오브젝트 생성
-    let object_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
-    let object_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
-    let object_dst_rect = Rect::new(640, 640, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
+    let object_sprite = include_bytes!("../asset/resource/sprite/objects.png");
+    let object_texture = texture_creator.load_texture_bytes(object_sprite).unwrap();
+    let object_src_rect = Rect::new(0, 0, OBJ_SPRITE_TILE_SIZE.0, OBJ_SPRITE_TILE_SIZE.1);
+    let object_dst_rect = Rect::new(640, 640, TILE_SIZE.0, TILE_SIZE.1);
+
+    // 오브젝트 벡터 생성
+    let mut objects: Vec<(Rect, u32)> = Vec::new();
+    for number in 0 .. 20 {
+        objects.push(
+            (
+                Rect::new(
+                    number * TILE_SIZE.0 as i32,
+                    704,
+                    TILE_SIZE.0,
+                    TILE_SIZE.1,
+                ),
+                number as u32
+            )
+        );
+    }
 
     // 화면 초기화
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
@@ -243,8 +262,8 @@ pub fn main() {
                 } else {
                     player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
                 }
-            }
-            None => {}
+            },
+            None => {},
         }
 
         /* 그리기 */
@@ -264,6 +283,40 @@ pub fn main() {
                 0.0, None, false, false
             ).unwrap();
         }
+
+        // 오브젝트 벡터 그리기, 충돌 판정
+        for object in &objects {
+            canvas.copy_ex(
+                &object_texture,
+                Rect::new(
+                    object.1 as i32 % OBJ_TILE_HINDEX_MAX as i32 * OBJ_SPRITE_TILE_SIZE.0 as i32,
+                    object.1 as i32 / OBJ_TILE_HINDEX_MAX as i32 * OBJ_SPRITE_TILE_SIZE.1 as i32,
+                    OBJ_SPRITE_TILE_SIZE.0, OBJ_SPRITE_TILE_SIZE.1
+                ),
+                aligned_rect(main_cam, object.0),
+                0.0, None, false, false
+            ).unwrap();
+            
+            match is_collide(player_dst_rect, object.0) {
+                Some(collision_rect) => {
+                    // 좌우 충돌
+                    if collision_rect.x() == player_dst_rect.x() {
+                        player_dst_rect.set_x(player_dst_rect.left() + PLAYER_SPEED as i32);
+                    } else {
+                        player_dst_rect.set_right(player_dst_rect.right() - PLAYER_SPEED as i32);
+                    }
+
+                    // 상하 충돌
+                    if collision_rect.y() == player_dst_rect.y() {
+                        player_dst_rect.set_y(player_dst_rect.top() + PLAYER_SPEED as i32);
+                    } else {
+                        player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
+                    }
+                },
+                None => {},
+            }
+        }
+
         // 오브젝트 스프라이트 그리기
         canvas.copy_ex(&object_texture, object_src_rect, aligned_rect(main_cam, object_dst_rect), 0.0, None, false, false).unwrap();
 
