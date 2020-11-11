@@ -1,5 +1,7 @@
 # 똥물의 숲 (동물의 숲 팬 게임)
 
+![스크린샷](https://user-images.githubusercontent.com/47947882/98845122-96deb380-2490-11eb-90aa-266bee326a3a.png)
+
 ### 2020-11-07
 * 리포지토리 추가
 * 윈도우 생성
