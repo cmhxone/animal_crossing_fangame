@@ -208,8 +208,8 @@ pub fn main() {
 
         // 플레이어의 벨로시티 값으로 플레이어를 이동한다
         if player_velocity.x() != 0 && player_velocity.y() != 0 {
-            player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
-            player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
+            // player_dst_rect.set_x(player_dst_rect.x() + (player_velocity.x() as f64 / 1.414213).round() as i32);
+            // player_dst_rect.set_y(player_dst_rect.y() + (player_velocity.y() as f64 / 1.414213).round() as i32);
         } else {
             player_dst_rect.set_x(player_dst_rect.x() + player_velocity.x());
             player_dst_rect.set_y(player_dst_rect.y() + player_velocity.y());
