@@ -13,13 +13,14 @@ use std::collections::HashSet;
 use physics::velocity::Velocity;
 use camera::camera::{ aligned_rect };
 use physics::collision::{ is_collide, replace_collide };
+use rand::Rng;
 
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
 // 화면 크기
 const SCREEN_SIZE: (u32, u32) = (1024, 768);
 // 스프라이트의 크기 상수
-const SPRITE_TILE_SIZE: (u32, u32) = (64, 64);
+const SPRITE_TILE_SIZE: (u32, u32) = (34, 52);
 const OBJ_SPRITE_TILE_SIZE: (u32, u32) = (16, 16);
 // 플레이어 걷기 애니메이션의 최대 스프라이트 갯수
 const PLAYER_WALKING_SPRITES: u32 = 4;
@@ -77,7 +78,7 @@ pub fn main() {
     let player_sprite = include_bytes!("../asset/resource/sprite/player.png");
     let player_texture = texture_creator.load_texture_bytes(player_sprite).unwrap();
     let mut player_src_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
-    let mut player_dst_rect = Rect::new(0, 0, SPRITE_TILE_SIZE.0, SPRITE_TILE_SIZE.1);
+    let mut player_dst_rect = Rect::new(0, 0, TILE_SIZE.0, TILE_SIZE.1);
     let mut player_velocity = Velocity::new(0, 0, 0);
 
     // let mut player = Player::new(
@@ -107,11 +108,14 @@ pub fn main() {
     // 오브젝트 벡터 생성
     let mut objects: Vec<(Rect, u32)> = Vec::new();
     for number in 0 .. 20 {
+        let mut rng = rand::thread_rng();
         objects.push(
             (
                 Rect::new(
-                    number * TILE_SIZE.0 as i32,
-                    704,
+                    // number * TILE_SIZE.0 as i32,
+                    // 704,
+                    rng.gen_range(0, map_size.0 as i32 - TILE_SIZE.0 as i32),
+                    rng.gen_range(0, map_size.1 as i32 - TILE_SIZE.1 as i32),
                     TILE_SIZE.0,
                     TILE_SIZE.1,
                 ),
