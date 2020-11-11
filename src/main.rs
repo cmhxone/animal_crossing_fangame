@@ -12,7 +12,7 @@ use sdl2::rect::Rect;
 use std::collections::HashSet;
 use physics::velocity::Velocity;
 use camera::camera::{ aligned_rect };
-use physics::collision::{ is_collide };
+use physics::collision::{ is_collide, replace_collide };
 
 // FPS 값
 const FRAME_PER_SECOND: u32 = 60;
@@ -249,19 +249,7 @@ pub fn main() {
         // 물체와 충돌 시 위치 재조정
         match is_collide(player_dst_rect, object_dst_rect) {
             Some(collision_rect) => {
-                // 좌우 충돌
-                if collision_rect.x() == player_dst_rect.x() {
-                    player_dst_rect.set_x(player_dst_rect.left() + PLAYER_SPEED as i32);
-                } else {
-                    player_dst_rect.set_right(player_dst_rect.right() - PLAYER_SPEED as i32);
-                }
-
-                // 상하 충돌
-                if collision_rect.y() == player_dst_rect.y() {
-                    player_dst_rect.set_y(player_dst_rect.top() + PLAYER_SPEED as i32);
-                } else {
-                    player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
-                }
+                player_dst_rect = replace_collide(collision_rect, player_dst_rect, player_velocity);
             },
             None => {},
         }
@@ -289,19 +277,7 @@ pub fn main() {
                 8|9|18|19|28|29|38|39|48|49 => {
                     match is_collide(player_dst_rect, tile.0) {
                         Some(collision_rect) => {
-                            // 좌우 충돌
-                            if collision_rect.x() == player_dst_rect.x() {
-                                player_dst_rect.set_x(player_dst_rect.left() + PLAYER_SPEED as i32);
-                            } else {
-                                player_dst_rect.set_right(player_dst_rect.right() - PLAYER_SPEED as i32);
-                            }
-        
-                            // 상하 충돌
-                            if collision_rect.y() == player_dst_rect.y() {
-                                player_dst_rect.set_y(player_dst_rect.top() + PLAYER_SPEED as i32);
-                            } else {
-                                player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
-                            }
+                            player_dst_rect = replace_collide(collision_rect, player_dst_rect, player_velocity);
                         },
                         None => {},
                     }
@@ -325,19 +301,7 @@ pub fn main() {
             
             match is_collide(player_dst_rect, object.0) {
                 Some(collision_rect) => {
-                    // 좌우 충돌
-                    if collision_rect.x() == player_dst_rect.x() {
-                        player_dst_rect.set_x(player_dst_rect.left() + PLAYER_SPEED as i32);
-                    } else {
-                        player_dst_rect.set_right(player_dst_rect.right() - PLAYER_SPEED as i32);
-                    }
-
-                    // 상하 충돌
-                    if collision_rect.y() == player_dst_rect.y() {
-                        player_dst_rect.set_y(player_dst_rect.top() + PLAYER_SPEED as i32);
-                    } else {
-                        player_dst_rect.set_bottom(player_dst_rect.bottom() - PLAYER_SPEED as i32);
-                    }
+                    player_dst_rect = replace_collide(collision_rect, player_dst_rect, player_velocity);
                 },
                 None => {},
             }
