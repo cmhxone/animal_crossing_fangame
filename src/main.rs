@@ -33,7 +33,8 @@ const OBJ_TILE_HINDEX_MAX: u32 = 4;
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
-    let _sdl_image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG);
+    let _sdl_image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
+    let ttf_context = sdl2::ttf::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
  
     let window = video_subsystem.window("똥물의 숲", SCREEN_SIZE.0, SCREEN_SIZE.1)
@@ -90,6 +91,12 @@ pub fn main() {
     let background_texture = texture_creator.load_texture_bytes(background_sprite).unwrap();
     let background_src_rect = Rect::new(0, 0, background_texture.query().width, background_texture.query().height);
     let background_dst_rect = Rect::new(0, 0, map_size.1, map_size.0);
+
+    // 둥근모꼴 폰트
+    let dung_geun_mo = include_bytes!("../asset/resource/font/DungGeunMo.ttf");
+    let dgm_font = ttf_context.load_font_from_rwops(sdl2::rwops::RWops::from_bytes(dung_geun_mo).unwrap(), 128).unwrap();
+    let font_surface = dgm_font.render("플레이어").blended(Color::RGBA(255, 255, 255, 255)).unwrap();
+    let font_texture = texture_creator.create_texture_from_surface(&font_surface).unwrap();
  
     // 오브젝트 생성
     let object_sprite = include_bytes!("../asset/resource/sprite/objects.png");
@@ -313,6 +320,8 @@ pub fn main() {
         // 플레이어 스프라이트 그리기
         canvas.copy_ex(&player_texture, player_src_rect, aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
 
+        // 글자 그리기
+        canvas.copy_ex(&font_texture, None, aligned_rect(main_cam, Rect::new(player_dst_rect.x(), player_dst_rect.y() - 16, player_dst_rect.width(), player_dst_rect.height() / 4)), 0.0, None, false, false). unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
         canvas.present();
