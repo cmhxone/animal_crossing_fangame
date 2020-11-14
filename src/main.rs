@@ -37,6 +37,7 @@ pub fn main() {
     let _sdl_image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
     let ttf_context = sdl2::ttf::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+    video_subsystem.text_input().stop();
  
     let window = video_subsystem.window("똥물의 숲", SCREEN_SIZE.0, SCREEN_SIZE.1)
         .position_centered()
@@ -113,9 +114,9 @@ pub fn main() {
             (
                 Rect::new(
                     // number * TILE_SIZE.0 as i32,
-                    // 704,
                     rng.gen_range(0, map_size.0 as i32 - TILE_SIZE.0 as i32),
-                    rng.gen_range(0, map_size.1 as i32 - TILE_SIZE.1 as i32),
+                    704,
+                    // rng.gen_range(0, map_size.1 as i32 - TILE_SIZE.1 as i32),
                     TILE_SIZE.0,
                     TILE_SIZE.1,
                 ),
@@ -135,8 +136,15 @@ pub fn main() {
     // 플레이어 위치 지정
     player_dst_rect.center_on(sdl2::rect::Point::new(SCREEN_SIZE.0 as i32 / 2, SCREEN_SIZE.1 as i32 / 2));
 
+    // 채팅모드 판별 변수
+    let mut chat_mode = false;
+    let mut chat_message = String::from(" ");
+    let mut chat_surface = dgm_font.render(&chat_message).blended(Color::RGBA(255, 255, 255, 255)).unwrap();
+    let mut chat_texture = texture_creator.create_texture_from_surface(&chat_surface).unwrap();
+
     // 프레임 계산을 위한 변수
     let mut frame: u32 = 0;
+
     'running: loop {
         // 프레임 증가
         frame += 1;
@@ -152,6 +160,12 @@ pub fn main() {
                 Event::Quit {..} => {
                     break 'running
                 },
+                Event::TextInput {text, ..} => {
+                    chat_message.push_str(text.as_str());
+                    println!("{}", chat_message);
+                    chat_surface = dgm_font.render(&chat_message).blended(Color::RGBA(255, 255, 255, 255)).unwrap();
+                    chat_texture = texture_creator.create_texture_from_surface(&chat_surface).unwrap();
+                }
                 _ => {}
             }
         }
@@ -169,29 +183,55 @@ pub fn main() {
         if !new_keys.is_empty() || !old_keys.is_empty() {
             // 입력 받은 키 (KeyDowns)
             for key in new_keys {
-                if key == Keycode::Down {
-                    player_velocity.set_y(PLAYER_SPEED as i32);
-                    // player.set_velocity_y(PLAYER_SPEED as i32);
-                } else if key == Keycode::Left {
-                    player_velocity.set_x(-(PLAYER_SPEED as i32));
-                    // player.set_velocity_x(-(PLAYER_SPEED as i32));
-                } else if key == Keycode::Right {
-                    player_velocity.set_x(PLAYER_SPEED as i32);
-                    // player.set_velocity_x(PLAYER_SPEED as i32);
-                } else if key == Keycode::Up {
-                    player_velocity.set_y(-(PLAYER_SPEED as i32));
-                    // player.set_velocity_y(-(PLAYER_SPEED as i32));
+                if !chat_mode {
+                    if key == Keycode::Down {
+                        player_velocity.set_y(PLAYER_SPEED as i32);
+                        // player.set_velocity_y(PLAYER_SPEED as i32);
+                    } else if key == Keycode::Left {
+                        player_velocity.set_x(-(PLAYER_SPEED as i32));
+                        // player.set_velocity_x(-(PLAYER_SPEED as i32));
+                    } else if key == Keycode::Right {
+                        player_velocity.set_x(PLAYER_SPEED as i32);
+                        // player.set_velocity_x(PLAYER_SPEED as i32);
+                    } else if key == Keycode::Up {
+                        player_velocity.set_y(-(PLAYER_SPEED as i32));
+                        // player.set_velocity_y(-(PLAYER_SPEED as i32));
+                    }
                 }
+
+                // 채팅모드 전환 변수
+                if key == Keycode::Return {
+                    chat_mode = !chat_mode;
+                    chat_message = String::from(" ");
+
+                    if video_subsystem.text_input().is_active() {
+                        video_subsystem.text_input().stop();
+                    }
+                    else  {
+                        video_subsystem.text_input().start();
+                    }
+                    player_velocity.set_x(0);
+                    player_velocity.set_y(0);
+                }
+
+                if key == Keycode::Backspace && chat_mode && chat_message.len() > 1 {
+                    chat_message.pop();
+                }
+
+                chat_surface = dgm_font.render(&chat_message).blended(Color::RGBA(255, 255, 255, 255)).unwrap();
+                chat_texture = texture_creator.create_texture_from_surface(&chat_surface).unwrap();
             }
 
             // 입력 해제 된 키 (KeyUps)
             for key in old_keys {
-                if key == Keycode::Down || key == Keycode::Up {
-                    player_velocity.set_y(0);
-                    // player.set_velocity_y(0);
-                } else if key == Keycode::Left || key == Keycode::Right {
-                    player_velocity.set_x(0);
-                    // player.set_velocity_x(0);
+                if !chat_mode {
+                    if key == Keycode::Down || key == Keycode::Up {
+                        player_velocity.set_y(0);
+                        // player.set_velocity_y(0);
+                    } else if key == Keycode::Left || key == Keycode::Right {
+                        player_velocity.set_x(0);
+                        // player.set_velocity_x(0);
+                    }
                 }
             }
         }
@@ -325,7 +365,10 @@ pub fn main() {
         canvas.copy_ex(&player_texture, player_src_rect, aligned_rect(main_cam, player_dst_rect), 0.0, None, false, false).unwrap();
 
         // 글자 그리기
-        canvas.copy_ex(&font_texture, None, aligned_rect(main_cam, Rect::new(player_dst_rect.x(), player_dst_rect.y() - 16, player_dst_rect.width(), player_dst_rect.height() / 4)), 0.0, None, false, false). unwrap();
+        canvas.copy_ex(&font_texture, None, aligned_rect(main_cam, Rect::new(player_dst_rect.x(), player_dst_rect.y() - 16, player_dst_rect.width(), player_dst_rect.height() / 4)), 0.0, None, false, false).unwrap();
+
+        // 채팅 입력창 그리기
+        canvas.copy_ex(&chat_texture, None, Rect::new(10, SCREEN_SIZE.1 as i32 -42, chat_message.len() as u32 * 24, 32), 0.0, None, false, false).unwrap();
 
         // 현재 캔버스를 윈도우에 그린다
         canvas.present();
